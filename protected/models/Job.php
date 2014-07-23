@@ -14,6 +14,8 @@
  * @property string $compensation
  * @property string $other_requirements
  * @property integer $email_notification
+ * @property string $posting_url
+ * @property string $comp_name
  *
  * The followings are the available model relations:
  * @property Application[] $applications
@@ -106,7 +108,7 @@ class Job extends CActiveRecord
 			array('deadline, other_requirements', 'safe'),
 			// The following rule is used by search().
 			// Please remove those attributes that should not be searched.
-			array('id, type, title, FK_poster, post_date, deadline, description, compensation, other_requirements, email_notification', 'safe', 'on'=>'search'),
+			array('id, type, title, FK_poster, post_date, deadline, description, compensation, other_requirements, email_notification, posting_url, comp_name', 'safe', 'on'=>'search'),
 		);
 	}
 
@@ -140,6 +142,7 @@ class Job extends CActiveRecord
 			'compensation' => 'Compensation',
 			'other_requirements' => 'Other Requirements',
 			'email_notification' => 'Email Notification',
+            'comp_name' => 'Company Name'
 		);
 	}
 	
@@ -173,6 +176,7 @@ class Job extends CActiveRecord
 		$criteria->compare('compensation',$this->compensation,true);
 		$criteria->compare('other_requirements',$this->other_requirements,true);
 		$criteria->compare('email_notification',$this->email_notification);
+        $criteria->compare('comp_name',$this->comp_name);
 
 		return new CActiveDataProvider($this, array(
 			'criteria'=>$criteria,
@@ -187,6 +191,36 @@ class Job extends CActiveRecord
 		}
 		return null;
 	}
+
+
+    public function cascade_delete()
+    {
+        $id = $this->id;
+
+        // remove any skill mappings
+        $skill_mappigns = JobSkillMap::model()->findAllByAttributes(array('jobid' => $id));
+        foreach ($skill_mappigns as $skill_mapping)
+        {
+            $skill_mapping->delete();
+        }
+
+        // remove any applications mappings
+        $app_mappings = Application::model()->findAllByAttributes(array('jobid' => $id));
+        foreach ($app_mappings as $app_mapping)
+        {
+            $app_mapping->delete();
+        }
+
+        // remove any handshake mappings
+        $hs_mappings = Handshake::model()->findAllByAttributes(array('jobid' => $id));
+        foreach($hs_mappings as $hs_mapping)
+        {
+            $hs_mapping->delete();
+        }
+
+        // finally remove job
+        $this->delete();
+    }
 	
 	public static function compare_skills($jobskillmaps, $studentskillmaps){
 		//first take out all irrelevant skills from the student
@@ -256,4 +290,21 @@ class Job extends CActiveRecord
         return $title;
 
     }
+
+    public static function getJobBySkill()
+    {
+        $skill = Skillset::model()->findAll();
+        $skills = array();
+        if($skill != null)
+        {
+            foreach($skill as $jk)
+            {
+                $skills[] = $jk->name;
+            }
+        }
+
+        return $skills;
+    }
+
+
 }

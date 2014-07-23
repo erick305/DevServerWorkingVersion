@@ -12,10 +12,25 @@ body{
   	margin-left: auto;
   	margin-right: auto;
   	min-height: 700px;
-  	
 }
 
-lab2 {
+#fullcontentjob{
+    width: 1100px;
+    margin-top: 4%;
+    margin-left: auto;
+    margin-right: auto;
+    min-height: 700px;
+}
+
+#jobcontent{
+    width: 75%;
+    float: right;
+    padding-bottom: 100px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#lab2 {
 font-weight: bold;
 display: inline-block;
 width: 120px;
@@ -38,7 +53,6 @@ font-size: 10pt;
 	float:left;
 
 }
-
 
 #hardcorecontent{
 	width: 1100px ;
@@ -73,14 +87,15 @@ font-size: 10pt;
 
 #ficationside{
 	float:left;
-	
-	
 }
 
 /************************** CONTAINERS CSS END **************************/
 
 
 /************************** PROFILE CSS **************************/
+
+
+
 
 #contactlinks{
 float:right;
@@ -340,7 +355,7 @@ margin: 0 10px 5px 0;
 }
 
 #menutools{
-	margin-bottom: 20px;
+	margin-bottom: 50px;
 	float: left;
 	width: 200px;
 	min-height: 180px;
@@ -405,6 +420,26 @@ margin: 0 10px 5px 0;
 	border-color: rgb(178, 197, 252);
 }
 
+#jobinterest{
+    float: left;
+    width:200px;
+    margin-top:20px;
+    min-height:250px;
+    padding:5px;
+    border-width: 1px;
+    border-color:white;
+    border-style:solid;
+    border-radius: 5px 5px 5px 5px;
+    text-align: center;
+    font-size:12px;
+    background-color: transparent;
+    border-color: rgb(178, 197, 252);
+}
+
+#jobinterest:hover{
+    border-color:#0088cc;
+}
+
 #menutools:hover{
 		border-color:#0088cc;
 }
@@ -436,7 +471,7 @@ margin: 0 10px 5px 0;
 .titlebox{
 	float:left;
 	margin:-6px 0 0 -6px;
-	background:#0088cc;
+    background: #006699;
 	color:white;
 	border-radius: 5px 0 5px 0;
 	padding:5px !important;
@@ -461,18 +496,10 @@ margin: 0 10px 5px 0;
 
 /*************************** PROFILE CSS END ***************************/
 
-
-
-
-
-
-
 video{
 	width:400px;
 	height:400px;
 }
-
-
 
 
 #homeSearch{
@@ -608,16 +635,16 @@ opacity: 1.5;
 
 
 
-
 #adminNotification{
-	
+    position: absolute;
+    top: 305px;
+    right: 100px;
 	margin-top:5px;   
  	float: right;
     width:300px;
 	min-height:200px;
 	padding:5px;
 	border-width: 1px;
-	border-color:white;
 	border-style:solid;
  	border-radius: 5px 5px 5px 5px;
 
@@ -628,8 +655,9 @@ opacity: 1.5;
 	
 	}
 
+
 #adminSearchbox{
-	margin-top:5px;   
+	margin-top:5px;
  	float: left;
     width:600px;
 	min-height:200px;
@@ -655,7 +683,7 @@ opacity: 1.5;
 	border-width: 1px;
 	border-color:white;
 	border-style:solid;
- 	border-radius: 3px 3px 3px 3px;
+ 	border-radius: 17px 5px 5px 5px;
 
  	font-size:12px;
  	background-color: transparent;
@@ -664,18 +692,17 @@ opacity: 1.5;
 
 #searchforjobs2{ 
  	float: left;
-    width:240px;
+    width:225px;
     margin-right:20px;
 	min-height:50px;
 	padding:5px;
-	border-width: 1px;
-	border-color:white;
+	border-width: 2px;
 	border-style:solid;
- 	border-radius: 3px 3px 3px 3px;
+ 	border-radius: 5px 0px 8px 0px;
 
  	font-size:12px;
  	background-color: transparent;
-	border-color: rgb(178, 197, 252);
+	border-color: #ADADAD;
 }
 
 
@@ -866,7 +893,7 @@ opacity: 1.5;
 	width:100%;
 }
 
-jobtitle{
+.jobtitle{
 	font-weight:bold;
 	display: inline-block;
     zoom: 1;
@@ -896,7 +923,8 @@ lab{
 	float:left;
 	clear: both;
 }
-lab2{
+
+.lab2{
 	font-weight:bold;
 	display: inline-block;
     width: 150px;
@@ -905,7 +933,7 @@ lab2{
 	float:left;
 	clear: both;
 }
-lab3{
+.lab3{
 	display: inline-block;
     width: 150px;
     zoom: 1;
@@ -914,7 +942,7 @@ lab3{
 	clear: both;
 	margin-top: -10px
 }
-jobdetail{
+.jobdetail{
 	font-weight:bold;
 	display: inline-block;
     width: 100px;
@@ -923,7 +951,7 @@ jobdetail{
 	float:left;
 	clear: both;
 }
-aboutme{
+.aboutme{
 
     width: 370px;
     zoom: 1;
@@ -1000,12 +1028,7 @@ font-size:18px;
 		
 }
 
-
-
-
-
-
-schoolDetail{
+.schoolDetail{
 	
 	padding-left:10px;
 }
@@ -1013,7 +1036,7 @@ h3{
 	font-size:20px!important;
 	line-height: 0!important;
 }
-experience{
+.experience{
 	font-weight:bold;
 	display: inline-block;
     width: 630px;
@@ -1108,7 +1131,7 @@ input, textarea{
 	top:1px;
 }
 
-ul
+div.nav ul
 {
     list-style-type: none;
 }
@@ -1473,13 +1496,16 @@ ul
 
 
 .jobtable {
-    border: solid #ccc 1px;
-    -moz-border-radius: 6px;
+    margin-bottom:50px;
+    border: solid #E1EEF4 1px;
+    table-layout: fixed;
+    width:77%;
+    -moz-border-radius: 30px;
     -webkit-border-radius: 6px;
     border-radius: 6px;
-    -webkit-box-shadow: 0 1px 1px #ccc; 
-    -moz-box-shadow: 0 1px 1px #ccc; 
-    box-shadow: 0 1px 1px #ccc;         
+    -webkit-box-shadow: 0 1px 1px #ccc;
+    -moz-box-shadow: 0 1px 1px #ccc;
+    box-shadow: 0 1px 1px #ccc;
 }
 
 .pageclick {
@@ -1498,21 +1524,26 @@ ul
     -ms-transition: all 0.1s ease-in-out;
     transition: all 0.1s ease-in-out;     
 }    
-    
-.jobtable td, .jobtable th {
-    border-left: 1px solid #ccc;
+
+.jobtable th{
+    border-left: 0px solid #E1EEF4;
     border-top: 1px solid #ccc;
+    padding: 10px;
+    text-align: left;
+}
+.jobtable td {
+    border-left: 1px solid #E1EEF4;
+    border-top: 1px solid #E1EEF4;
     padding: 10px;
     text-align: left;    
 }
 
 .jobtable th {
-    background-color: #0088cc;
+    background-color: #006699;
     -webkit-box-shadow: 0 1px 0 rgba(255,255,255,.8) inset; 
     -moz-box-shadow:0 1px 0 rgba(255,255,255,.8) inset;  
     box-shadow: 0 1px 0 rgba(255,255,255,.8) inset;        
     border-top: none;
-    text-shadow: 0 1px 0 rgba(255,255,255,.5);
     color:white;
 }
 
@@ -1574,7 +1605,7 @@ ul
 	top:1px;
 }
 
-matchlab{
+.matchlab{
 	font-weight:bold;
 	display: inline-block;
     width: 80px;
@@ -1621,7 +1652,6 @@ matchlab{
 	-webkit-box-shadow: 0 0 5px#888;
 	box-shadow: 2px 2px 2px #888;
 	font-size:12px;
-	background-color:trasnparent;
 }
 .matchProfileImage img{
 	width: 200px;
@@ -1733,11 +1763,6 @@ matchlab{
 	border-bottom-right-radius: 4px;
 	border-bottom-left-radius: 4px; 
 	padding:10px 10px 25px;
-	/*
-	background: #FFFFFF; /* old browsers 
-	background: -moz-linear-gradient(top, #FFFFFF 0%, #FFFFFF 90%, #e4e9ed 100%);
-	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#FFFFFF), color-stop(90%,#FFFFFF), color-stop(100%,#e4e9ed)); /* webkit */
-	*/
 	background: transparent !important;
 	margin:0;
 	color:#333;
@@ -1862,7 +1887,7 @@ box-shadow: 1px 1px 10px 1px; border-radius:0 5px 5px 0;height: 28px;
 	background-color: #FFFFFF;
 	left: 420px;
 	position: absolute;
-	top: 43.5px;
+	top: 43px;
 	z-index: 9999;
 	padding: 10px;
 	border-radius: 10px;
@@ -1884,5 +1909,60 @@ padding-left: 40px;
 }
 
 
+.onoffswitch {
+    position: relative; width: 56px;
+    -webkit-user-select:none; -moz-user-select:none; -ms-user-select: none;
+}
+
+.onoffswitch-checkbox {
+    display: none;
+}
+
+.onoffswitch-label {
+    display: block; overflow: hidden; cursor: pointer;
+    border: 2px solid #C7C7C7; border-radius: 50px;
+}
+
+.onoffswitch-inner {
+    display: block; width: 200%; margin-left: -100%;
+    -moz-transition: margin 0.3s ease-in 0s; -webkit-transition: margin 0.3s ease-in 0s;
+    -o-transition: margin 0.3s ease-in 0s; transition: margin 0.3s ease-in 0s;
+}
+
+.onoffswitch-inner:before, .onoffswitch-inner:after {
+    display: block; float: left; width: 50%; height: 20px; padding: 0; line-height: 20px;
+    font-size: 12px; color: white; font-family: Trebuchet, Arial, sans-serif; font-weight: bold;
+    -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box;
+}
+
+.onoffswitch-inner:before {
+    content: "ON";
+    padding-left: 5px;
+    background-color: #2FA827; color: #FFFFFF;
+}
+
+.onoffswitch-inner:after {
+    content: "OFF";
+    padding-right: 5px;
+    background-color: #AD2121; color: #FFFFFF;
+    text-align: right;
+}
+
+.onoffswitch-switch {
+    display: block; width: 20px; margin: 0px;
+    background: #FFFFFF;
+    border: 2px solid #C7C7C7; border-radius: 50px;
+    position: absolute; top: 0; bottom: 0; right: 32px;
+    -moz-transition: all 0.3s ease-in 0s; -webkit-transition: all 0.3s ease-in 0s;
+    -o-transition: all 0.3s ease-in 0s; transition: all 0.3s ease-in 0s;
+}
+
+.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-inner {
+    margin-left: 0;
+}
+
+.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch {
+    right: 0px;
+}
 
 

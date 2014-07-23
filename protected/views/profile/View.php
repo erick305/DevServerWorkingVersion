@@ -6,7 +6,6 @@
 /* @var $form CActiveForm */
 
 
-
 $this->breadcrumbs=array(
 	'Profile'=>array('/profile'),
 	'View',
@@ -23,6 +22,7 @@ if (!isset($videoresume)){
 if (!isset($user->basicInfo)){
 	$user->basicInfo = new BasicInfo;
 }
+
 ?>
 
 
@@ -62,11 +62,13 @@ $('div[class^=child-]').hide();
     }
 </script>
 
+
 <script>
 $(document).ready(function() {
 	var i = 1;
 	$("#saveSkills").hide();
-	$("#edit").click(function(e) { 
+   // $("#saveInterest").hide();
+	$("#edit").click(function(e) {
 		if($("#BasicInfo_about_me").is(":disabled") && $("#User_email").is(":disabled")
 		&& $("#BasicInfo_phone").is(":disabled")&& $("#BasicInfo_city").is(":disabled")
 		&& $("#BasicInfo_state").is(":disabled")) {  
@@ -89,12 +91,14 @@ $(document).ready(function() {
 		}
 	});
 
-	
-
 	$("#saveSkills").click(function(e) {
 		$(this).closest('form').submit();
 	});
-	
+
+    $("#saveInterest").click(function(e) {
+        $(this).closest('form').submit();
+    });
+
 	$("#editEducation").click(function(e) { 
 		
 		if ($('#Education_name').val() == ""){
@@ -131,7 +135,6 @@ $(document).ready(function() {
 		$("#saveSkills").show();
 	});
 
-	
 	$('#addskillname').bind("enterKey",function(e){
 		  $("#addskill").click();
 	});
@@ -198,6 +201,61 @@ function uploadvideo(){
 	}
 
 }
+
+    function toggleJobMatching(){
+        var val = $('#myonoffswitch').val();
+        if(val == '1')
+        {
+            $('#myonoffswitch').val('0');
+        }
+        else
+        {
+            $('#myonoffswitch').val('1');
+        }
+        $.get("/JobFair/index.php/user/toggleEmailMatch", {"value": val}, function(data){
+            data = JSON.parse(data);
+            if(data["status"] == '0')
+            {
+                $("#myonoffswitch").prop('checked', false);
+            }
+            else
+            {
+                $("#myonoffswitch").prop('checked', true);
+            }
+            $("#user_lastmodified").html(data["username"]);
+            $("#user_lastmodifieddate").html(data["last_modified"]);
+            $("#myonoffswitch").val(data["status"]);
+        });
+    }
+
+    function toggleLookingForJob(){
+        var val = $('#myonoffswitch_1').val();
+        if(val == '1')
+        {
+            var jm = $('#myonoffswitch').val();
+            if(jm == '1')
+            {
+                toggleJobMatching();
+            }
+            $('#myonoffswitch_1').val('0');
+        }
+        else
+        {
+            $('#myonoffswitch_1').val('1');
+        }
+        $.get("/JobFair/index.php/user/toggleLookingForJob", {"value": val}, function(data){
+            data = JSON.parse(data);
+            if(data["status"] == '0')
+            {
+                $("#myonoffswitch_1").prop('checked', false);
+            }
+            else
+            {
+                $("#myonoffswitch_1").prop('checked', true);
+            }
+            $("#myonoffswitch_1").val(data["status"]);
+        });
+    }
 </script>
 
 
@@ -219,8 +277,7 @@ function uploadvideo(){
 
 <div  id="profileImage">
 <div id="upload">
-<img style="width:200px; 
-	height:215px;" src="<?php echo $user->image_url ?>" />
+<img style="width:200px; height:215px;" src="<?php echo $user->image_url ?>" />
 	 </div>
 	<a id="uploadlink" href="#" onclick="uploadpic()"><img style="margin-top: 5px;" src='/JobFair/images/ico/add.gif' />Upload Image</a>
 	<?php echo CHtml::activeFileField($user, 'image_url', array('style'=>'display: none;')); ?>  
@@ -255,9 +312,9 @@ function uploadvideo(){
 	
 </div> <!--  END BASIC INFO -->
 
-	
 
-	
+
+
 	<div style="clear:both"></div>
 		<?php $this->endWidget(); ?>
 	<hr>
@@ -269,10 +326,135 @@ function uploadvideo(){
 <div style="clear:both"></div>
 
 <div id="menutools">
+    <div class="titlebox">SETTINGS</div><br><br>
+    <?php
+        $checked = $checked_lfj = '';
+        $job_notif = null;
+        $looking_for_job = null;
+        if(isset($user['looking_for_job']))
+        {
+            $looking_for_job = $user->looking_for_job;
+            if($user->looking_for_job == '1')
+            {
+                $checked_lfj = 'checked';
+            }
+        }
+        if(isset($user['job_notification']))
+        {
+            $job_notif = $user->job_notification;
+            if($user->job_notification == '1')
+            {
+                $checked = 'checked';
+            }
+        }
+    ?>
+    <div style="overflow: hidden;">
+        <div style="float: left;">Email Job Notifications:</div>
+        <div style="margin-left: 130px;" class="onoffswitch">
+            <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" value='<?php echo $job_notif; ?>' id="myonoffswitch" <?php echo $checked; ?> onclick="toggleJobMatching()">
+            <label class="onoffswitch-label" for="myonoffswitch">
+                <span class="onoffswitch-inner"></span>
+                <span class="onoffswitch-switch"></span>
+            </label>
+        </div>
+    </div>
+    <div style="overflow: hidden;">
+        <div style="float: left;">Looking For Job:</div>
+        <div style="margin-left: 130px;" class="onoffswitch">
+            <input type="checkbox" name="myonoffswitch_1" class="onoffswitch-checkbox" value='<?php echo $looking_for_job; ?>' id="myonoffswitch_1" <?php echo $checked_lfj; ?> onclick="toggleLookingForJob()">
+            <label class="onoffswitch-label" for="myonoffswitch_1">
+                <span class="onoffswitch-inner"></span>
+                <span class="onoffswitch-switch"></span>
+            </label>
+        </div>
+    </div>
+    <hr>
+
+    <!-- Saved Query Profile Search-->
+    <h5> Queries Preferences</h5>
+    <form method="GET" id="interestForm" action="/JobFair/index.php/profile/saveinterest">
+        <div style= "text-align:left; clear:both" >
+            <p>Select queries to search for jobs</p>
+
+            <div style= "text-align:left;">
+                <?php foreach ($saveQ as $query) { ?>
+                    <?php if($query['active'] == '1')
+                    {?>
+                        <div class="checkbox">
+                            <input type="checkbox" name="<?php echo $query['id']; ?>" id="<?php echo $query['id']; ?>" value="1" checked>
+                            <strong> <?php echo ($query['query_tag']).":"; ?></strong> <?php echo ($query['query']); ?>
+                            <del><a href="/JobFair/index.php/profile/deleteinterest?id=<?php echo $query->id?>"><img src='/JobFair/images/ico/del.gif' width="10px" height="10px"/></a></del>
+
+                        </div>
+                    <?php } else
+                    {?>
+                        <div class="checkbox">
+                            <input type="checkbox" name="<?php echo $query['id']; ?>" id="<?php echo $query['id']; ?>" value="1">
+                            <strong> <?php echo ($query['query_tag']).":"; ?></strong> <?php echo ($query['query']); ?>
+                            <del><a href="/JobFair/index.php/profile/deleteinterest?id=<?php echo $query->id?>"><img src='/JobFair/images/ico/del.gif' width="10px" height="10px"/></a></del>
+
+                        </div>
+                    <?php } ?>
+                <?php } ?>
+            </div>
+            <hr>
+            <p>Select email frequency</p>
+            <?php
+                $date = $user->job_int_date;
+                if($date == 1)
+                {?>
+                    <div class="radio">
+                        <input type="radio" name="day" id="daily" value="1" checked>
+                        <strong> Send me job postings daily </strong>
+                    </div>
+                <?php }else {?>
+                    <div class="radio">
+                        <input type="radio" name="day" id="daily" value="1">
+                        <strong> Send me job postings daily </strong>
+                    </div>
+                <?php } ?>
+                <?php if($date == 7) {?>
+                    <div class="radio">
+                        <input type="radio" name="day" id="weekly" value="7" checked>
+                        <strong> Send me job postings weekly </strong>
+                    </div>
+                <?php } else {?>
+                    <div class="radio">
+                        <input type="radio" name="day" id="weekly" value="7">
+                        <strong> Send me job postings weekly </strong>
+                    </div>
+                <?php } ?>
+                <?php if($date == 30) {?>
+                    <div class="radio">
+                        <input type="radio" name="day" id="monthly" value="30" checked>
+                        <strong> Send me job postings monthly </strong>
+                    </div>
+                <?php } else {?>
+                    <div class="radio">
+                        <input type="radio" name="day" id="monthly" value="30">
+                        <strong> Send me job postings monthly </strong>
+                    </div>
+                <?php } ?>
+        </div>
+        <?php $this->widget('bootstrap.widgets.TbButton', array(
+            'label'=>'Save',
+            'type'=>'primary',
+            'htmlOptions'=>array(
+                'data-toggle'=>'modal',
+                'data-target'=>'#myModal',
+                'id' => "saveInterest",
+                'style' => "margin-top: 5px; margin-bottom: 5px;width: 120px;",
+            ),
+        )); ?>
+    </form>
+
+</div>
+
+<div id="menutools">
 <div class="titlebox">DOCUMENTS</div><br><br>
 <p><a href="#" id="editResume" class="editbox"><img src='/JobFair/images/ico/add.gif' onclick="uploadresume()"/></a></p>
 
-	
+
 <?php
 
 	$form = $this->beginWidget('CActiveForm', array(
@@ -315,27 +497,6 @@ $this->endWidget();
 
 ?> 
 </div>
-
-
-<div id="menutools">
-<div id="studentlinks">
-<!--Author Manuel
-making the links dynamic so if the base Url changed the program won not be affected
--->
-<?php
-    $image =CHtml::image(Yii::app()->baseUrl. '/images/ico/linkedinlogo.png');
-    echo CHtml::link($image, array('user/auth1'));
-?><br>
-<a LinkedIn Connect  </a>
-
-<hr/>
-<a href="/JobFair/index.php/user/ChangePassword">Change Password</a>
-</div>
-
-</div>
-
-
-
 </div> <!--  END LEFT SIDE -->
 
 
@@ -528,10 +689,6 @@ function formatDate($mysqldate){
 
 ?>
 
-
-
-
-
 </div> <!--  END COTENT -->
 
 <div id="rightside">
@@ -612,13 +769,74 @@ $form = $this->beginWidget('CActiveForm', array(
 		    	),
 			)); ?>
    
-</div> <!-- End SKILLS -->
-
-
-
-</div> <!-- END RIGHT SIDE -->
-
 </div>
+<!-- End SKILLS -->
+
+<div id="rightside">
+    <div id="menutools">
+        <div id="studentlinks">
+            <!--Author Manuel
+            making the links dynamic so if the base Url changed the program won not be affected
+            -->
+            <h5>Link Accounts:</h5>
+            <?php
+            $image = CHtml::image(Yii::app()->baseUrl. '/images/imgs/linkedIn_login.png','', array('width'=>160, 'height'=>100));
+            echo CHtml::link($image, array('profile/auth'));
+
+            $currentUser = User::getCurrentUser();
+            if(($currentUser != null) && ($currentUser->linkedinid !=null))
+                echo CHtml::image(Yii::app()->baseUrl. '/images/ico/checkmark.ico','', array('width'=>30, 'height'=>30));
+            else{
+                echo CHtml::image(Yii::app()->baseUrl. '/images/ico/exclamation5.ico','', array('width'=>30, 'height'=>30));
+            }
+            ?><br><br>
+
+
+            <?php
+            $image =CHtml::image(Yii::app()->baseUrl. '/images/imgs/google_login.png','', array('width'=>160, 'height'=>100));
+            echo CHtml::link($image, array('profile/googleAuth'));
+
+            $currentUser = User::getCurrentUser();
+            if(($currentUser != null) && ($currentUser->googleid !=null))
+                echo CHtml::image(Yii::app()->baseUrl. '/images/ico/checkmark.ico','', array('width'=>30, 'height'=>30));
+            else{
+                echo CHtml::image(Yii::app()->baseUrl. '/images/ico/exclamation5.ico','', array('width'=>30, 'height'=>30));
+            }
+            ?><br><br>
+
+
+            <?php
+            $image =CHtml::image(Yii::app()->baseUrl. '/images/imgs/fiu_cs_login.png','', array('width'=>160, 'height'=>100));
+            echo CHtml::link($image, array('profile/fiuCsSeniorAuth'));
+
+            $currentUser = User::getCurrentUser();
+            if(($currentUser != null) && ($currentUser->fiucsid !=null))
+                echo CHtml::image(Yii::app()->baseUrl. '/images/ico/checkmark.ico','', array('width'=>30, 'height'=>30));
+            else{
+                echo CHtml::image(Yii::app()->baseUrl. '/images/ico/exclamation5.ico','', array('width'=>30, 'height'=>30));
+            }
+            ?><br><br>
+
+            <?php
+            $image =CHtml::image(Yii::app()->baseUrl. '/images/imgs/fiu_login.png','', array('width'=>160, 'height'=>100));
+            echo CHtml::link($image, array('profile/fiuAuth'));
+
+            $currentUser = User::getCurrentUser();
+            if(($currentUser != null) && ($currentUser->fiu_account_id !=null))
+                echo CHtml::image(Yii::app()->baseUrl. '/images/ico/checkmark.ico','', array('width'=>30, 'height'=>30));
+            else{
+                echo CHtml::image(Yii::app()->baseUrl. '/images/ico/exclamation5.ico','', array('width'=>30, 'height'=>30));
+            }
+            ?><br><br>
+
+            <hr/>
+            <a href="/JobFair/index.php/user/ChangePassword">Change Password</a>
+        </div>
+
+    </div>
+
+</div><!-- End Link Accounts -->
+
 </div>
 
 <!-- Check for first time viewing for students, prompt for LinkedIn Connect -->
@@ -633,8 +851,12 @@ if (User::isCurrentUserStudent() && !$user->has_viewed_profile) {
 <br><br>
 <h3 class="mostwantedskills">Consider using LinkedIn to create your profile.</h3>
 <div id="studentlinks">
-<a href="http://srprog-fall13-01.cs.fiu.edu/JobFair/index.php/profile/auth">
-<img src="/JobFair/images/ico/linkedinlogo.png" height="55" width="55">
+<a  //edit by Manuel making the link dynamic, using Yii
+    <?php
+    $image =CHtml::image(Yii::app()->baseUrl. '/images/ico/linkedinlogo.png');
+    echo CHtml::link($image, array('/profile/auth'));
+    ?>
+
 <br>LinkedIn Connect</a>
 </div>
 </div>

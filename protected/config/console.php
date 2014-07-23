@@ -4,19 +4,30 @@
 // Any writable CConsoleApplication properties can be configured here.
 return array(
 	'basePath'=>dirname(__FILE__).DIRECTORY_SEPARATOR.'..',
-	'name'=>'My Console Application',
+	'name'=>'Virtual Job Fair',
 	'import'=>array(
         'application.models.*',
         'application.components.*',
         'ext.YiiMailer.YiiMailer',
         'ext.curl.Curl',
     ),
+
 	// application components
 	'components'=>array(
 		/*'db'=>array(
 			'connectionString' => 'sqlite:'.dirname(__FILE__).'/../data/testdrive.db',
 		),*/
 		// uncomment the following to use a MySQL database
+
+        'jobmatch'=>array(
+            'class'=>'JobMatch'
+        ),
+
+        'request' => array(
+            'hostInfo' => 'http://vjf-dev.cs.fiu.edu',
+            'baseUrl' => '/JobFair/',
+            'scriptUrl' => 'index.php',
+        ),
 
 		'db'=>array(
 			'connectionString' => 'mysql:host=localhost;dbname=jobfairdb',

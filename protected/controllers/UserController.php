@@ -87,7 +87,7 @@ class UserController extends Controller
 				$model->FK_usertype = 2;
 				$model->registration_date = new CDbExpression('NOW()');
 				$model->activation_string = $this->genRandomString(10);
-				$model->image_url = '/JobFair/images/profileimages/avatarsmall.gif';
+				$model->image_url = '/JobFair/images/profileimages/user-default.png';
 					
 				//Hash the password before storing it into the database
 				$hasher = new PasswordHash(8, false);
@@ -120,6 +120,9 @@ class UserController extends Controller
 				$message1 = "There is a new employer named ".$model->username. " that is waiting for acctivation"; 
 				$admins = User::model()->findAllByAttributes(array('FK_usertype'=>3));
 				User::sendAdminNotificationNewEmpolyer($model, $admins, $link2, $message1);
+                $message = "You have successfully registered. Once your account has been approved, you will receive an email stating your account is active.";
+                $message .= "<br/>Your username: $model->username";
+                User::sendEmail($model->email, "Registration Notification", "Registration Notification", $message);
 				$this->render('NewEmployer');
 				return;	
 			}
@@ -139,15 +142,18 @@ class UserController extends Controller
 		} else {
 			$user = User::model()->find("email=:email",array(':email'=>$email));
 		}
-		
-		$user->sendVerificationEmail();
+        $link = CHtml::link('click here', 'http://'.Yii::app()->request->getServerName() . '/JobFair/index.php/user/VerifyEmail?username=' . $user->username
+            . '&activation_string=' . $user->activation_string);
+        $message = 'You need to verify your account before logging in.  Use this '. $link .' to verify your account.';
+        $user->sendEmail($user->email, 'Verify your account on Virtual Job Fair', 'Verify Account', $message);
+		//$user->sendVerificationEmail();
 		$this->redirect('/JobFair/index.php/site/page?view=verification');
 	}
 	
 	public function actionStudentRegister()
 	{
 		$model=new User;
-	
+
 		// uncomment the following code to enable ajax-based validation
 		/*
 		 if(isset($_POST['ajax']) && $_POST['ajax']==='user-StudentRegister-form')
@@ -159,12 +165,19 @@ class UserController extends Controller
 	
 		if(isset($_POST['User']))
 		{
-			if ($this->actionVerifyStudentRegistration() != "") {
+            $user = $_POST['User'];
+            $email = $user['email'];
+            $pathStudent = $this->actionVerifyStudentRegistration();
+			if($pathStudent == 1){
+                $this->actionStudentHelpReg($email);
+                return;
+            }
+            if ($pathStudent != "" && $pathStudent != 1) {
 				$this->render('StudentRegister');
 			}
 						
 			$model->attributes=$_POST['User'];
-			$model->image_url = '/JobFair/images/profileimages/avatarsmall.gif';
+			$model->image_url = '/JobFair/images/profileimages/user-default.png';
 			$resume = Resume::model();
 			
 			//Form inputs are valid
@@ -195,16 +208,9 @@ class UserController extends Controller
 				Yii::log("checks", CLogger::LEVEL_ERROR, 'application.controller.Prof');
 				$basicInfo->phone = NULL;
 			}
-				
-			
 			$basicInfo->save(false);
-
-			//Send the verification email
-			//$model->sendVerificationEmail();
-
 			$this->actionSendVerificationEmail($model->email);
 			return;
-			
 		}
 		$error = '';
 		$this->render('StudentRegister',array('model'=>$model, 'error' => $error));
@@ -228,7 +234,8 @@ class UserController extends Controller
 			$error .= "Username is taken<br />";
 		}
 		if (User::model()->find("email=:email",array(':email'=>$email))) {
-			$error .= "Email is taken<br />";
+            $error .= "Email is taken<br />";
+            return 1;
 		}
 		if ($password != $password2) {
 			$error .= "Passwords do not match<br />";
@@ -239,7 +246,7 @@ class UserController extends Controller
 		if (!$this->check_email_address($email)){
 			$error .= "Email is not correct format<br />";
 		}
-		
+
 		print $error;
 		return $error;
 	}
@@ -459,13 +466,165 @@ class UserController extends Controller
 			
 // 			print "<pre>"; print_r('user is null');print "</pre>";
 
-			// check that there is no duplicate user
+			// check that there is no duplicate user if so link to that account
 			$duplicateUser = User::model()->findByAttributes(array('email'=>$data->{'email-address'}));
 			if ($duplicateUser != null) {
-				$error = 'User email is already linked with another account.';
-				$model=new User;
-				$this->render('StudentRegister',array('error' => $error, 'model'=>$model));
-				return;
+
+
+
+                // get username and link the accounts
+                $username = $duplicateUser->username;
+                $user = User::model()->find("username=:username",array(':username'=>$username));
+                $user->linkedinid = $data->{'id'};
+                $user->save(false);
+                $user_id = $user->id;
+
+
+                // ------------------BASIC INFO---------------
+                $basic_info = null;
+                $basic_info = BasicInfo::model()->findByAttributes(array('userid'=>$user_id));
+                if ($basic_info == null)
+                    $basic_info = new BasicInfo();
+                $basic_info->userid = $user_id;
+                $basic_info->save(false);
+                // ------------------BASIC INFO -----------------
+
+                // -----------------EDUCATION ----------------------
+                // get number of educations to add
+                $educ_count = $data->educations['total'];
+
+                // delete current educations
+                $delete_educs = Education::model()->findAllByAttributes(array('FK_user_id'=>$user_id));
+                foreach ($delete_educs as $de)
+                {
+                    $de->delete();
+                }
+
+                // add educations
+                for ($i=0; $i<$educ_count; $i++)
+                {
+                    // first check if current education is in school table. if not, add it
+                    $current_school_name = $data->educations->education[$i]->{'school-name'};
+                    $school_exists = School::model()->findByAttributes(array('name'=>$current_school_name));
+                    if ($school_exists == null){
+                        $new_school = new School();
+                        $new_school->name = $current_school_name;
+                        $new_school->save();
+                        $school_id = School::model()->findByAttributes(array('name'=>$current_school_name))->id;
+                    } else {
+                        $school_id = $school_exists->id;
+                    }
+
+                    // now ready to add new education
+                    $new_educ = new Education();
+                    $new_educ->degree = $data->educations->education[$i]->degree;
+                    $new_educ->major = $data->educations->education[$i]->{'field-of-study'};
+// 	   	$model->admission_date=date('Y-m-d',strtotime($model->admission_date));
+                    $new_educ->graduation_date = date('Y-m-d',strtotime($data->educations->education[$i]->{'end-date'}->year));
+// 	   	print "<pre>"; print_r($new_educ->graduation_date);print "</pre>";return;
+                    $new_educ->FK_school_id = $school_id;
+                    $new_educ->FK_user_id = $user_id;
+                    $new_educ->additional_info = $data->educations->education[$i]->notes;
+                    $new_educ->save(false);
+                }
+                // -----------------EDUCATION ----------------------
+
+                // -----------------EXPERIENCE -------------------
+                // get number of educations to add
+                $pos_count = $data->positions['total'];
+
+                // delete current positions
+                $delete_pos = Experience::model()->findAllByAttributes(array('FK_userid'=>$user_id));
+                foreach ($delete_pos as $de)
+                {
+                    $de->delete();
+                }
+
+                for ($i=0; $i<$pos_count; $i++)
+                {
+                    $new_pos = new Experience();
+                    $new_pos->FK_userid = $user_id;
+                    $new_pos->company_name = $data->positions->position[$i]->company->name;
+                    $new_pos->job_title = $data->positions->position[$i]->title;
+                    $new_pos->job_description = $data->positions->position[$i]->summary;
+                    $temp_start_date = $data->positions->position[$i]->{'start-date'}->month . '/01/' . $data->positions->position[$i]->{'start-date'}->year;
+                    $new_pos->startdate = date('Y-m-d', strtotime($temp_start_date));
+                    if ($data->positions->position[$i]->{'is-current'} == 'true'){
+                        $new_pos->enddate =  '';
+                    } else {
+                        $temp_end_date = $data->positions->position[$i]->{'end-date'}->month . '/01/' . $data->positions->position[$i]->{'end-date'}->year;
+                        $new_pos->enddate = date('Y-m-d', strtotime($temp_end_date));
+                    }
+                    $new_pos->city = '';
+                    $new_pos->state = '';
+                    $new_pos->save(false);
+                }
+                // -----------------EXPERIENCE -------------------
+
+                // ----------------------SKILLS----------------------
+                // get number of educations to add
+                $linkedin_skill_count = $data->skills['total'];
+
+                for ($i=0; $i<$linkedin_skill_count; $i++){
+                    // check if skill exists in skill set table, if not, add it to skill set table
+                    if (Skillset::model()->findByAttributes(array('name'=>$data->skills->skill[$i]->skill->name)) == null){
+                        $new_skill = new Skillset();
+                        $new_skill->name = $data->skills->skill[$i]->skill->name;
+                        $new_skill->save(false);
+                        echo 'New Skill ' . $new_skill->attributes;
+                    }
+
+                    // check if student has that skill, if not add it to student-skill-map table
+                    if (StudentSkillMap::model()->findByAttributes(array('userid'=>$user_id,
+                            'skillid'=>Skillset::model()->findByAttributes(array('name'=>$data->skills->skill[$i]->skill->name))->id)) == null){
+                        $new_sdnt_skill = new StudentSkillMap();
+                        $new_sdnt_skill->userid = $user_id;
+                        $new_sdnt_skill->skillid = Skillset::model()->findByAttributes(array('name'=>$data->skills->skill[$i]->skill->name))->id;
+                        $new_sdnt_skill->ordering = $i + 1;
+                        $new_sdnt_skill->save(false);
+                        echo 'New Skill for student' . $new_sdnt_skill->attributes;
+                    }
+                }
+                // ----------------------SKILLS----------------------
+
+                if ($duplicateUser->disable != 1)
+                {
+                    $identity = new UserIdentity($duplicateUser->username, '');
+                    if ($identity->authenticateOutside()) {
+                        Yii::app()->user->login($identity);
+                    }
+                    $mesg = "LinkedIn";
+                    //get variables
+                    $mesg = "LinkedIn";
+
+                    $phone = $data->{'phone-numbers'}->{'phone-number'}->{'phone-number'};
+                    if($phone != null){
+                        $phone = strip_tags($data->{'phone-numbers'}->{'phone-number'}->{'phone-number'}->asXML());
+                    }
+
+                    $city = $data->location->name;
+                    if($city != null){
+                        $city = strip_tags($data->location->name->asXML());
+                    }
+
+                    $state = '';
+
+                    $about_me = $data->headline;
+                    if($about_me != null){
+                        $about_me = strip_tags($data->headline->asXML());
+                    }
+
+                    $picture = $data->{'picture-urls'}->{'picture-url'}[0];
+                    if($picture != null){
+                        $picture = strip_tags($data->{'picture-urls'}->{'picture-url'}[0]->asXML());
+                    }
+                    $this->actionLinkTo($data->{'email-address'},$data->{'first-name'},$data->{'last-name'}, $picture ,$mesg,$phone,$city,$state,$about_me);
+                    return;
+                }
+                else {
+                    $this->redirect("/JobFair/index.php/site/page?view=disableUser");
+                    return;
+                }
 			}
 
 			// Populate user attributes
@@ -639,13 +798,268 @@ class UserController extends Controller
 			$this->render('ChangeFirstPassword',array('model'=>$model, 'error' => $error));
 		}
 	}
+    public function actionMergeAccounts() {
+
+        $model = new LinkTooForm();
+        $error = '';
+
+        if(isset($_POST['LinkTooForm'])) {
+
+            $model = new LinkTooForm();
+            $model->attributes = $_POST['LinkTooForm'];
+
+            $username = $model->email;
+            $password = $model->password;
+
+            $login = new LoginForm;
+            $login->username = $username;
+            $login->password = $password;
+
+            $user1 = User::model()->findByAttributes(array('username'=>$username));
+            $user2 = User::getCurrentUser();
+
+            if ($user1 == null){
+                $error = "Username was incorrect.";
+                $this->render('MergeAccounts',array('model'=>$model, 'error' => $error));
+            }
+
+            elseif (!$login->validate()){
+                $error = "Password was incorrect.";
+                $this->render('MergeAccounts',array('model'=>$model, 'error' => $error));
+            }
+
+            else
+            {
+                $basic_info = BasicInfo::model()->findByAttributes(array('userid'=>$user1->id));
+
+                //link the third party accounts;
+                $linkedinid = $user1->linkedinid;
+                $googleid = $user1->googleid;
+                $fiucsid = $user1->fiucsid;
+                $fiu_account_id = $user1->fiu_account_id;
+
+                if($user2->linkedinid == null && $linkedinid != null)
+                {
+                    $user2->linkedinid = $linkedinid;
+                    $user2->save(false);
+                }
+                if($user2->googleid == null && $googleid != null)
+                {
+                    $user2->googleid = $googleid;
+                    $user2->save(false);
+                }
+                if($user2->fiucsid == null && $fiucsid != null)
+                {
+                    $user2->fiucsid = $fiucsid;
+                    $user2->save(false);
+                }
+                if($user2->fiu_account_id == null && $fiu_account_id != null)
+                {
+                    $user2->fiu_account_id = $fiu_account_id;
+                    $user2->save(false);
+                }
+
+                //disable user
+                $user1->disable = 1;
+                $user1->save(false);
+
+                //get basic info
+                $first_name = $user1->first_name;
+                $last_name = $user1->last_name;
+                $email = $user1->email;
+                $picture = $user1->image_url;
+                $mesg = "Virtual Job Fair";
+                $phone = $basic_info->phone;
+                $city = $basic_info->city;
+                $state = $basic_info->state;
+                $about_me = $basic_info->about_me;
+
+                //get education
+                $education1 = Education::model()->find('FK_user_id=:id',array(':id'=>$user1->id));
+                $education2 = Education::model()->find('FK_user_id=:id',array(':id'=>$user2->id));
+
+                if($education1 != null && $education2 == null){
+
+                    $education1->FK_user_id = $user2->id;
+                    $education1->save(false);
+                }
+
+                if($education1 != null && $education2 != null){
+                    if($education1->FK_school_id != $education2->FK_school_id)
+                    {
+                        $education1->FK_user_id = $user2->id;
+                        $education1->save(false);
+                    }
+
+                }
+                //get experience
+                $experience1 = Experience::model()->find('FK_userid=:id',array(':id'=>$user1->id));
+                $experience2 = Experience::model()->find('FK_userid=:id',array(':id'=>$user2->id));
+
+
+
+                if($experience1 != null && $experience2 == null){
+
+                    $experience1->FK_userid = $user2->id;
+                    $experience1->save(false);
+                }
+                if($experience1 != null && $experience2 != null){
+                    if($experience1->company_name != $experience2->company_name)
+                    {
+                        $experience1->FK_userid = $user2->id;
+                        $experience1->save(false);
+                    }
+
+                }
+                //get skill
+
+                $this->actionLinkTo($email,$first_name,$last_name,$picture,$mesg,$phone,$city,$state,$about_me);
+                return;
+
+            }
+//
+        }
+        else {
+            $this->render('MergeAccounts',array('model'=>$model, 'error' => $error));
+        }
+    }
 	
 	public function actionAuth1()
 	{
 		$this->render('auth1');
 	}
-	
 
+    public function actionToggleEmailMatch()
+    {
+        if(isset($_GET['value']))
+        {
+            $val = intval($_GET['value']);
+            $val = ($val == 0) ? 1 : 0;
+            $current_user = User::getCurrentUser();
+            $current_user->job_notification = $val;
+            $current_user->save(false);
+            echo json_encode(Array("status"=>$val));
+        }
+    }
+
+    public function actionDuplicationError()
+    {
+        //$model = User::getCurrentUser();
+        //$error = '';
+        //,array('model'=>$model, 'error' => $error)
+        $this->render('duplicationError');
+    }
+    public function actionStudentHelpReg($email)
+    {
+        $model = new LinkTooForm();
+        $this->render('StudentHelpReg', array('model'=>$model,'email'=>$email));
+    }
+    public function actionLinkTo($email, $first_name, $last_name, $picture,$mesg,$phone,$city,$state,$about_me)
+    {
+        $model = new LinkTooForm();
+        $this->render('LinkTo', array('model'=>$model, 'email'=>$email, 'first_name'=>$first_name,'last_name'=>$last_name,
+            'picture'=>$picture, 'mesg'=>$mesg , 'phone'=>$phone, 'city'=>$city, 'state'=>$state, 'about_me'=>$about_me));
+
+        //return $link;
+    }
+    public function actionUserChoice()
+    {
+
+        if(isset($_POST['LinkTooForm']))
+        {
+            $user = User::getCurrentUser();
+            $basic_info = BasicInfo::model()->findByAttributes(array('userid'=>$user->id));
+
+            $model = new LinkTooForm();
+            $model->attributes = $_POST['LinkTooForm'];
+            $mesg = $model->toPost;
+
+            if($model->profilePic != null){
+                $user->image_url = $model->profilePic;
+                $user->save(false);
+            }
+            if($model->profilePicVar != null){
+                $user->image_url = $model->profilePicVar;
+                $user->save(false);
+            }
+            if($model->firstname != null){
+                $user->first_name = $model->firstname;
+                $user->save(false);
+            }
+            if($model->firstnamevar != null){
+                $user->first_name = $model->firstnamevar;
+                $user->save(false);
+            }
+            if($model->lastname != null){
+                $user->last_name = $model->lastname;
+                $user->save(false);
+            }
+            if($model->lastnamevar != null){
+                $user->last_name = $model->lastnamevar;
+                $user->save(false);
+            }
+            if($model->email != null){
+                $user->email = $model->email;
+                $user->save(false);
+            }
+            if($model->emailvar != null){
+                $user->email = $model->emailvar;
+                $user->save(false);
+            }
+            if($model->phone != null){
+                $basic_info->phone = $model->phone;
+                $basic_info->save(false);
+            }
+            if($model->phonevar != null){
+                $basic_info->phone = $model->phonevar;
+                $basic_info->save(false);
+            }
+            if($model->city != null){
+                $basic_info->city = $model->city;
+                $basic_info->save(false);
+            }
+            if($model->cityvar != null){
+                $basic_info->city = $model->cityvar;
+                $basic_info->save(false);
+            }
+            if($model->state != null){
+                $basic_info->state = $model->state;
+                $basic_info->save(false);
+            }
+            if($model->statevar != null){
+                $basic_info->state = $model->statevar;
+                $basic_info->save(false);
+            }
+            if($model->about_me != null){
+                $basic_info->about_me = $model->about_me;
+                $basic_info->save(false);
+            }
+            if($model->about_me_var != null){
+                $basic_info->about_me = $model->about_me_var;
+                $basic_info->save(false);
+            }
+
+        }
+        Yii::app()->end();
+    }
+    public function actionLinkNotification($mesg)
+    {
+        $model = new LinkTooForm();
+        $this->render('LinkNotification', array('model'=>$model, 'mesg'=>$mesg));
+    }
+
+    public function actionToggleLookingForJob()
+    {
+        if(isset($_GET['value']))
+        {
+            $val = intval($_GET['value']);
+            $val = ($val == 0) ? 1 : 0;
+            $current_user = User::getCurrentUser();
+            $current_user->looking_for_job = $val;
+            $current_user->save(false);
+            echo json_encode(Array("status"=>$val));
+        }
+    }
 	// Uncomment the following methods and override them if needed
 	/*
 	public function filters()

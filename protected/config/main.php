@@ -61,9 +61,16 @@ return array(
 		'urlManager'=>array(
 			'urlFormat'=>'path',
 			'rules'=>array(
-				'<controller:\w+>/<id:\d+>'=>'<controller>/view',
-				'<controller:\w+>/<action:\w+>/<id:\d+>'=>'<controller>/<action>',
-				'<controller:\w+>/<action:\w+>'=>'<controller>/<action>',
+
+                // REST API PATTERNS
+                array('API/post', 'pattern'=>'api/postings', 'verb'=>'POST'),
+                array('API/update', 'pattern'=>'api/postings/<modelid:\d+>', 'verb'=>'PUT'),
+                //
+
+                '<controller:\w+>/<id:\d+>'=>'<controller>/view',
+                '<controller:\w+>/<action:\w+>/<id:\d+>'=>'<controller>/<action>',
+                '<controller:\w+>/<action:\w+>'=>'<controller>/<action>',
+
 			),
 		),
 		'email'=>array(
@@ -88,6 +95,11 @@ return array(
 			//'password' => 'E!qazxsw2',
 			'charset' => 'utf8',
 		),
+
+        'jobmatch'=>array(
+            'class'=>'JobMatch'
+        ),
+
 		
 		'errorHandler'=>array(
 			// use 'site/error' action to display errors
